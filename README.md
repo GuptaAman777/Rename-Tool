@@ -12,7 +12,7 @@ The **Modern Bulk Rename Tool** is a user-friendly application designed to renam
 ## How to Use
 
 ### 1. Running the Application
-1. Download and extract the `.exe` file from the release section.
+1. Download the `.exe` file from the release section.
 2. Double-click on `RenameTool.exe` to launch the application.
 
 ### 2. Renaming Files
