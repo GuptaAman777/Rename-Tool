@@ -8,6 +8,7 @@ The **Modern Bulk Rename Tool** is a user-friendly application designed to renam
 - Customizable numbering format (single-digit, two-digit, three-digit, etc.).
 - Optional prefix and suffix settings.
 - Preserves file extensions while renaming.
+- Undo Option to revert back to orignal names.
 
 ## How to Use
 
@@ -22,12 +23,14 @@ The **Modern Bulk Rename Tool** is a user-friendly application designed to renam
 3. Set the numbering format (e.g., `1`, `01`, `001`).
 4. (Optional) Enable and enter a **prefix** and/or **suffix**.
 5. Click **"OK"** to rename all files in the selected folder.
+6. Undo Button if you want to Revert [Optional].
 
 #### Selecting Specific Files
 1. Click **"Select Files & Rename"**.
 2. Choose the files you want to rename.
 3. Configure the numbering format, prefix, and suffix if needed.
 4. Click **"OK"** to rename the selected files.
+5. Undo Button if you want to Revert [Optional].
 
 ### 3. Prefix & Suffix Options
 - Enable the **prefix** checkbox to add a custom prefix before the numbering.
@@ -40,9 +43,11 @@ The **Modern Bulk Rename Tool** is a user-friendly application designed to renam
 
 ## Troubleshooting
 - There is no fucking chance.
+- If doesn't work then your pc probably sucks or run as administrator or use windows 10 or above.
 
 ## License
 This project is released under the MIT License. Feel free to modify and distribute it as needed.
+Though do give me credits.
 
 ---
 ### 📌 Enjoy effortless bulk renaming with a modern and intuitive interface! 🚀
