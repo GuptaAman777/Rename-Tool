@@ -1,13 +1,20 @@
 import os
 import re
+import sys
 from functools import lru_cache
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, 
     QFileDialog, QLineEdit, QMessageBox, QCheckBox, QHBoxLayout, 
-    QFrame, QScrollArea, QProgressBar
+    QFrame, QScrollArea
 )
-from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QTimer
-from PyQt6.QtGui import QIcon, QFont
+from PyQt6.QtCore import Qt, QPropertyAnimation, QRect
+from PyQt6.QtGui import QIcon
+
+"""
+File Renaming Tool
+Created by GuptaAman777
+Copyright © 2025 GuptaAman777. All rights reserved.
+"""
 
 class RenameTool(QWidget):
     def __init__(self):
@@ -16,20 +23,34 @@ class RenameTool(QWidget):
         self.rename_history = []
         self.last_directory = None
         self.setup_ui()
+        self.connect_signals()
+        
+        # Developer signature
+        self._developer = "GuptaAman777"
+        self._copyright = "Copyright © 2025 GuptaAman777"
+        
+    def connect_signals(self):
+        # Connect all signals in one place for better organization
+        self.prefix_checkbox.stateChanged.connect(self.update_preview)
+        self.suffix_checkbox.stateChanged.connect(self.update_preview)
+        self.prefix_entry.textChanged.connect(self.update_preview)
+        self.suffix_entry.textChanged.connect(self.update_preview)
+        self.digit_entry.textChanged.connect(self.validate_inputs)
         
     def setup_ui(self):
         self.setWindowTitle("File Renaming Tool")
-        self.setGeometry(100, 100, 800, 500)  # Increased window size for better layout
+        self.setGeometry(100, 100, 850, 550)
         
-        # Add window icon
-        self.setWindowIcon(QIcon("Rename Tool.ico"))
+        # Set application icon - using the correct path for PyInstaller
+        icon_path = self.get_resource_path("icon.ico")
+        self.setWindowIcon(QIcon(icon_path))
         
         self.setup_theme()
         
-        # Main layout with better spacing
+        # Main layout
         main_layout = QHBoxLayout()
         main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(15)
+        main_layout.setSpacing(20)
         
         # Left panel (Input controls)
         left_panel = self.create_left_panel()
@@ -39,29 +60,76 @@ class RenameTool(QWidget):
         right_panel = self.create_right_panel()
         main_layout.addWidget(right_panel, 3)
         
-        # Progress bar
-        self.progress_bar = QProgressBar()
-        self.progress_bar.setVisible(False)
-        self.progress_bar.setStyleSheet("""
-            QProgressBar {
-                border: 2px solid #2d2d3f;
-                border-radius: 5px;
-                text-align: center;
-                background-color: #1e1e2e;
-            }
-            QProgressBar::chunk {
-                background-color: #007AFF;
-                border-radius: 3px;
-            }
-        """)
-        
         # Final layout assembly
         final_layout = QVBoxLayout(self)
         final_layout.addLayout(main_layout)
-        final_layout.addWidget(self.progress_bar)
+        
+        # Add GitHub repository button and copyright info
+        footer_layout = QHBoxLayout()
+        footer_layout.setContentsMargins(0, 5, 0, 0)
+        
+        # GitHub repository button
+        github_button = QPushButton("🔗 GitHub Repository")
+        github_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2d2d3f;
+                color: #ffffff;
+                padding: 6px 12px;
+                border-radius: 6px;
+                font-size: 9pt;
+                max-width: 150px;
+            }
+            QPushButton:hover {
+                background-color: #3d3d4f;
+            }
+            QPushButton:pressed {
+                background-color: #007AFF;
+            }
+        """)
+        github_button.clicked.connect(lambda: self.open_github_repo("https://github.com/GuptaAman777/Rename-Tool"))
+        footer_layout.addWidget(github_button)
+        
+        # Add spacer to push copyright to the right
+        footer_layout.addStretch()
+        
+        # Copyright text
+        copyright_text = "Copyright © 2025 GuptaAman777 | For personal use only | For commercial contact: "
+        copyright_label = QLabel(copyright_text)
+        copyright_label.setStyleSheet("""
+            color: #555555;
+            font-size: 8pt;
+            padding: 2px;
+            background-color: transparent;
+        """)
+        footer_layout.addWidget(copyright_label)
+        
+        # Create clickable link
+        github_link = QLabel('<a href="https://github.com/GuptaAman777" style="color: #007AFF; text-decoration: none;">github.com/GuptaAman777</a>')
+        github_link.setOpenExternalLinks(True)
+        github_link.setStyleSheet("""
+            color: #555555;
+            font-size: 8pt;
+            padding: 2px;
+            background-color: transparent;
+        """)
+        footer_layout.addWidget(github_link)
+        
+        # Add the footer layout to the main layout
+        final_layout.addLayout(footer_layout)
+        
         self.setLayout(final_layout)
         
         self.animate_window()
+    
+    def get_resource_path(self, relative_path):
+        """Get absolute path to resource, works for dev and for PyInstaller"""
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+        
+        return os.path.join(base_path, relative_path)
 
     def setup_theme(self):
         self.setStyleSheet("""
@@ -81,10 +149,6 @@ class RenameTool(QWidget):
             QScrollArea {
                 padding: 1px;
             }
-            QProgressBar {
-                min-height: 20px;
-                max-height: 20px;
-            }
         """)
         
     def create_left_panel(self):
@@ -92,12 +156,16 @@ class RenameTool(QWidget):
         panel.setStyleSheet("background-color: #2d2d3f; border-radius: 10px;")
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(10)
+        layout.setSpacing(15)
+        
+        # Title for the panel
+        title = QLabel("Rename Settings")
+        title.setStyleSheet("font-size: 14pt; font-weight: bold; margin-bottom: 10px;")
+        layout.addWidget(title)
         
         # Digits input
         digits_group = self.create_input_group("Number Format", "Enter digits (e.g., 3)")
         self.digit_entry = digits_group.findChild(QLineEdit)
-        self.digit_entry.textChanged.connect(self.validate_inputs)
         layout.addWidget(digits_group)
         
         # Prefix input
@@ -112,6 +180,11 @@ class RenameTool(QWidget):
         self.suffix_entry = suffix_group.findChild(QLineEdit)
         layout.addWidget(suffix_group)
         
+        # Help text
+        help_text = QLabel("Enter the number of digits for file numbering.\nOptionally add prefix/suffix to the filenames.")
+        help_text.setStyleSheet("color: #aaaaaa; font-size: 9pt; margin-top: 10px;")
+        layout.addWidget(help_text)
+        
         layout.addStretch()
         return panel
 
@@ -120,17 +193,22 @@ class RenameTool(QWidget):
         panel.setStyleSheet("background-color: #2d2d3f; border-radius: 10px;")
         layout = QVBoxLayout(panel)
         layout.setContentsMargins(15, 15, 15, 15)
-        layout.setSpacing(10)
+        layout.setSpacing(15)
+        
+        # Title for the panel
+        title = QLabel("File Selection & Preview")
+        title.setStyleSheet("font-size: 14pt; font-weight: bold; margin-bottom: 10px;")
+        layout.addWidget(title)
         
         # Action buttons
         self.create_action_buttons(layout)
         
         # File list header
         file_header = QLabel("Selected Files:")
-        file_header.setStyleSheet("font-weight: bold; font-size: 11pt; margin-top: 10px;")
+        file_header.setStyleSheet("font-weight: bold; font-size: 11pt; margin-top: 5px;")
         layout.addWidget(file_header)
         
-        # File list
+        # File list scroll area with improved styling
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setStyleSheet("""
@@ -138,13 +216,16 @@ class RenameTool(QWidget):
                 border: none;
                 background-color: transparent;
             }
-            QScrollBar {
-                background-color: #1e1e2e;
+            QScrollBar:vertical {
+                background-color: #252535;
                 width: 10px;
             }
-            QScrollBar::handle {
-                background-color: #3d3d4f;
+            QScrollBar::handle:vertical {
+                background-color: #4d4d5f;
                 border-radius: 5px;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background-color: #2d2d3f;
             }
         """)
         
@@ -159,6 +240,44 @@ class RenameTool(QWidget):
         
         scroll_area.setWidget(file_container)
         layout.addWidget(scroll_area)
+        
+        # Add preview section with scroll area
+        preview_header = QLabel("Preview:")
+        preview_header.setStyleSheet("font-weight: bold; font-size: 11pt; margin-top: 5px;")
+        layout.addWidget(preview_header)
+        
+        # Preview scroll area with improved styling
+        preview_scroll = QScrollArea()
+        preview_scroll.setWidgetResizable(True)
+        preview_scroll.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+            QScrollBar:vertical {
+                background-color: #252535;
+                width: 10px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: #4d4d5f;
+                border-radius: 5px;
+            }
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                background-color: #2d2d3f;
+            }
+        """)
+        
+        preview_container = QWidget()
+        preview_container.setStyleSheet("background-color: #1e1e2e; border-radius: 5px;")
+        preview_layout = QVBoxLayout(preview_container)
+        
+        self.preview_list = QLabel("No preview available")
+        self.preview_list.setWordWrap(True)
+        self.preview_list.setStyleSheet("color: #888888; padding: 10px;")
+        preview_layout.addWidget(self.preview_list)
+        
+        preview_scroll.setWidget(preview_container)
+        layout.addWidget(preview_scroll)
         
         return panel
 
@@ -347,6 +466,40 @@ class RenameTool(QWidget):
     def validate_inputs(self):
         is_valid = self.digit_entry.text().strip().isdigit()
         self.rename_button.setEnabled(is_valid and bool(self.selected_files))
+        self.update_preview()
+
+    def update_preview(self):
+        if not self.selected_files or not self.digit_entry.text().strip().isdigit():
+            self.preview_list.setText("No preview available")
+            self.preview_list.setStyleSheet("color: #888888;")
+            return
+
+        try:
+            digit_format = int(self.digit_entry.text().strip())
+            files = self.get_sorted_files(self.selected_files)[:5]  # Preview first 5 files
+            
+            if not files:
+                self.preview_list.setText("No numbered files found")
+                return
+
+            prefix = self.prefix_entry.text() if self.prefix_checkbox.isChecked() else ""
+            suffix = self.suffix_entry.text() if self.suffix_checkbox.isChecked() else ""
+            
+            preview_text = "Preview of first 5 files:\n\n"
+            for idx, (old_path, _, ext) in enumerate(files, 1):
+                old_name = os.path.basename(old_path)
+                new_name = f"{prefix}{str(idx).zfill(digit_format)}{suffix}{ext}"
+                preview_text += f"{old_name} → {new_name}\n"
+                
+            if len(self.selected_files) > 5:
+                preview_text += f"\n... and {len(self.selected_files)-5} more files"
+                
+            self.preview_list.setText(preview_text)
+            self.preview_list.setStyleSheet("color: #ffffff;")
+            
+        except Exception as e:
+            self.preview_list.setText(f"Preview error: {str(e)}")
+            self.preview_list.setStyleSheet("color: #ff6b6b;")
 
     def start_rename(self):
         if not self.selected_files:
@@ -357,15 +510,48 @@ class RenameTool(QWidget):
             QMessageBox.warning(self, "Invalid Input", "Please enter a valid number of digits.")
             return
 
-        msg_box = QMessageBox(self)
-        msg_box.setWindowTitle("Confirm Rename")
-        msg_box.setText(f"Are you sure you want to rename {len(self.selected_files)} files?")
-        msg_box.setStandardButtons(QMessageBox.StandardButton.No | QMessageBox.StandardButton.Yes)
+        # Create a custom dialog with better styled buttons
+        dialog = QMessageBox(self)
+        dialog.setWindowTitle("Confirm Rename")
+        dialog.setText(f"Are you sure you want to rename {len(self.selected_files)} files?")
         
-        if msg_box.exec() == QMessageBox.StandardButton.No:
-            return
-            
-        self.process_rename(self.selected_files)
+        # Fix: Use standard buttons instead of custom buttons for better compatibility
+        dialog.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        yes_btn = dialog.button(QMessageBox.StandardButton.Yes)
+        no_btn = dialog.button(QMessageBox.StandardButton.No)
+        
+        # Apply styling to standard buttons
+        yes_btn.setText("✓ Yes, Rename Files")
+        yes_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #34c759;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-weight: bold;
+                min-width: 150px;
+            }
+            QPushButton:hover { background-color: #2ea94e; }
+            QPushButton:pressed { background-color: #27963f; }
+        """)
+        
+        no_btn.setText("✗ No, Cancel")
+        no_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #FF3B30;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-weight: bold;
+                min-width: 150px;
+            }
+            QPushButton:hover { background-color: #E0352B; }
+            QPushButton:pressed { background-color: #C02D25; }
+        """)
+        
+        # Check the result directly
+        if dialog.exec() == QMessageBox.StandardButton.Yes:
+            self.process_rename(self.selected_files)
 
     def process_rename(self, files):
         digit_format = int(self.digit_entry.text().strip())
@@ -378,11 +564,6 @@ class RenameTool(QWidget):
         prefix = self.prefix_entry.text() if self.prefix_checkbox.isChecked() else ""
         suffix = self.suffix_entry.text() if self.suffix_checkbox.isChecked() else ""
         
-        # Show progress bar
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, len(files))
-        self.progress_bar.setValue(0)
-        
         # Clear previous history
         self.rename_history.clear()
         
@@ -393,18 +574,48 @@ class RenameTool(QWidget):
             try:
                 os.rename(old_path, new_path)
                 self.rename_history.append((new_path, old_path))
-                self.progress_bar.setValue(idx)
-                QApplication.processEvents()  # Update UI
             except OSError as e:
                 QMessageBox.warning(self, "Error", f"Failed to rename {os.path.basename(old_path)}: {str(e)}")
                 continue
-
-        # Hide progress bar after completion
-        QTimer.singleShot(1000, lambda: self.progress_bar.setVisible(False))
         
-        # Show success message
+        # Show styled success message with centered button
         if self.rename_history:
-            QMessageBox.information(self, "Success", f"Successfully renamed {len(self.rename_history)} files!")
+            success_dialog = QMessageBox(self)
+            success_dialog.setWindowTitle("Success")
+            success_dialog.setText(f"✅ Successfully renamed {len(self.rename_history)} files!")
+            success_dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
+            
+            # Get the OK button and style it
+            ok_btn = success_dialog.button(QMessageBox.StandardButton.Ok)
+            ok_btn.setText("OK")
+            ok_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #34c759;
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 6px;
+                    font-weight: bold;
+                    min-width: 100px;
+                }
+                QPushButton:hover { background-color: #2ea94e; }
+                QPushButton:pressed { background-color: #27963f; }
+            """)
+            
+            # Set dialog layout to center the button
+            success_dialog.setStyleSheet("""
+                QDialogButtonBox {
+                    alignment: center;
+                }
+                QMessageBox {
+                    background-color: #1e1e2e;
+                }
+                QMessageBox QLabel {
+                    color: white;
+                    font-size: 12pt;
+                }
+            """)
+            
+            success_dialog.exec()
             self.undo_button.setEnabled(True)
         else:
             QMessageBox.warning(self, "No Changes", "No files were renamed.")
@@ -413,58 +624,64 @@ class RenameTool(QWidget):
         if not self.rename_history:
             QMessageBox.warning(self, "Nothing to Undo", "No previous renames to undo.")
             return
-            
-        # Show progress bar
-        self.progress_bar.setVisible(True)
-        self.progress_bar.setRange(0, len(self.rename_history))
-        self.progress_bar.setValue(0)
         
         # Undo renames in reverse order
-        for idx, (new_path, old_path) in enumerate(reversed(self.rename_history)):
+        for new_path, old_path in reversed(self.rename_history):
             try:
                 if os.path.exists(new_path):
                     os.rename(new_path, old_path)
-                self.progress_bar.setValue(idx + 1)
-                QApplication.processEvents()  # Update UI
             except OSError:
                 continue
-                
-        # Hide progress bar after completion
-        QTimer.singleShot(1000, lambda: self.progress_bar.setVisible(False))
         
-        QMessageBox.information(self, "Undo Success", "Renaming has been undone.")
+        # Show styled undo success message with centered button
+        undo_dialog = QMessageBox(self)
+        undo_dialog.setWindowTitle("Undo Success")
+        undo_dialog.setText("↩️ Renaming has been undone.")
+        undo_dialog.setStandardButtons(QMessageBox.StandardButton.Ok)
+        
+        # Get the OK button and style it
+        ok_btn = undo_dialog.button(QMessageBox.StandardButton.Ok)
+        ok_btn.setText("OK")
+        ok_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #34c759;
+                color: white;
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-weight: bold;
+                min-width: 100px;
+            }
+            QPushButton:hover { background-color: #2ea94e; }
+            QPushButton:pressed { background-color: #27963f; }
+        """)
+        
+        # Set dialog layout to center the button
+        undo_dialog.setStyleSheet("""
+            QDialogButtonBox {
+                alignment: center;
+            }
+            QMessageBox {
+                background-color: #1e1e2e;
+            }
+            QMessageBox QLabel {
+                color: white;
+                font-size: 12pt;
+            }
+        """)
+        
+        undo_dialog.exec()
+        
         self.rename_history.clear()
         self.undo_button.setEnabled(False)
+        
+    def open_github_repo(self, url):
+        """Open the GitHub repository in the default web browser"""
+        import webbrowser
+        webbrowser.open(url)
 
 
 if __name__ == "__main__":
-    app = QApplication([])
+    app = QApplication(sys.argv)
     window = RenameTool()
     window.show()
-    app.exec()
-
-# Remove everything after this line
-def update_toggle(self, state, circle, text):
-        if state == Qt.CheckState.Checked.value:
-            circle.setStyleSheet("""
-                background-color: white;
-                border-radius: 9px;
-                margin: 3px;
-                margin-left: 25px;
-            """)
-            text.setText("ON")
-            text.setStyleSheet("color: white; font-size: 10px; font-weight: bold; margin-right: 10px;")
-        else:
-            circle.setStyleSheet("""
-                background-color: white;
-                border-radius: 9px;
-                margin: 3px;
-                margin-left: 3px;
-            """)
-            text.setText("OFF")
-            text.setStyleSheet("color: white; font-size: 10px; font-weight: bold; margin-left: 5px;")
-        
-        # Also update the entry field
-        entry = self.sender().parent().findChild(QLineEdit)
-        if entry:
-            entry.setEnabled(state == Qt.CheckState.Checked.value)
+    sys.exit(app.exec())
