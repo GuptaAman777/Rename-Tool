@@ -2,6 +2,8 @@
 
 A modern, user-friendly tool for batch renaming files with customizable numbering, prefixes, and suffixes.
 
+[CODE GENERATED WITH THE HELP OF AI (CLAUDE SONNET 3.7/3.5)]
+
 ## Features
 
 - **Batch Renaming**: Process multiple files at once
